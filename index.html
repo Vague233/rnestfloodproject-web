@@ -1,49 +1,95 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Monitor Banjir RnEST</title>
+    <title>Dasbor Banjir RnEST</title>
     <style>
+        /* Desain dasar: Gelap, bersih, minimalis */
         body { 
-            background-color: #111; 
-            color: white; 
-            font-family: sans-serif; 
+            background-color: #0a0a0a; 
+            color: #ffffff; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             text-align: center; 
-            margin-top: 20%; 
+            margin: 0;
+            padding: 50px 20px;
         }
-        h1 { font-size: 3rem; color: #aaaaaa; }
-        #nilai-air { font-size: 7rem; color: #00ff00; font-weight: bold; }
+        h1 { color: #888888; font-size: 2.5rem; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 2px;}
+        
+        /* Membuat wadah berjajar untuk kotak data */
+        .wadah-kartu { 
+            display: flex; 
+            justify-content: center; 
+            gap: 30px; 
+            flex-wrap: wrap; 
+        }
+        
+        /* Desain kotak (laci) per sensor */
+        .kartu { 
+            background-color: #1a1a1a; 
+            padding: 30px; 
+            border-radius: 15px; 
+            width: 250px; 
+            border: 1px solid #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .kartu h2 { font-size: 1.2rem; color: #aaaaaa; margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px;}
+        .nilai { font-size: 4.5rem; font-weight: bold; margin: 15px 0; color: #00ff00; } /* Hijau terang bawaan */
+        .satuan { color: #777; font-size: 0.9rem; }
     </style>
 </head>
 <body>
-    <h1>Jarak Permukaan Air:</h1>
-    <div id="nilai-air">Memuat...</div>
+
+    <h1>Pemantauan Area Sungai</h1>
+    
+    <div class="wadah-kartu">
+        <div class="kartu">
+            <h2>Jarak Permukaan Air</h2>
+            <div id="nilai-jarak" class="nilai">--</div>
+            <div class="satuan">Centimeter (cm)</div>
+        </div>
+
+        <div class="kartu">
+            <h2>Intensitas Hujan</h2>
+            <div id="nilai-hujan" class="nilai">--</div>
+            <div class="satuan">Analog Value (0-1023)</div>
+        </div>
+
+        <div class="kartu">
+            <h2>Level Terendam</h2>
+            <div id="nilai-air" class="nilai">--</div>
+            <div class="satuan">Analog Value (0-1023)</div>
+        </div>
+    </div>
 
     <script>
-        // alamat firebase
+        // 1. Alamat kotak bekal di Firebase (Pastikan nama akhirnya /data_sensor.json)
         const urlFirebase = "https://rnest-flood-monitor-default-rtdb.asia-southeast1.firebasedatabase.app/sensor_jarak.json";
 
-        // 2. fungsi ambil data
-        async function ambilData() {
+        // 2. Fungsi mengambil bekal dan membaginya ke laci
+        async function ambilDataLengkap() {
             try {
-                // Kurir berangkat mengambil data
                 const respon = await fetch(urlFirebase);
                 const data = await respon.json();
                 
-                // Kurir menulis di papan tulis (jika datanya kosong, tulis 0)
-                const angka = data !== null ? data : 0;
-                document.getElementById("nilai-air").innerText = angka + " cm";
-                
+                // Jika data tidak kosong (artinya ESP32 sudah mengirim)
+                if (data !== null) {
+                    // Membaca setiap sekat bekal dan menaruhnya di layar
+                    document.getElementById("nilai-jarak").innerText = data.jarak !== undefined ? data.jarak : 0;
+                    document.getElementById("nilai-hujan").innerText = data.hujan !== undefined ? data.hujan : 0;
+                    document.getElementById("nilai-air").innerText = data.air !== undefined ? data.air : 0;
+                } else {
+                    // Jika ESP32 belum hidup, tampilkan angka 0
+                    document.getElementById("nilai-jarak").innerText = "0";
+                    document.getElementById("nilai-hujan").innerText = "0";
+                    document.getElementById("nilai-air").innerText = "0";
+                }
             } catch (error) {
-                // Jika kurir jatuh atau gagal
-                document.getElementById("nilai-air").innerText = "Gagal";
+                console.log("Menunggu koneksi...");
             }
         }
 
-        // loop
-        setInterval(ambilData, 5000);
-        
-        // deploy
-        ambilData();
+        // 3. Ulangi setiap 5 detik
+        setInterval(ambilDataLengkap, 5000);
+        ambilDataLengkap();
     </script>
 </body>
 </html>
