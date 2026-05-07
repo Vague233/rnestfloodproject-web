@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monitor Banjir RnEST</title>
+    <style>
+        body { 
+            background-color: #111; 
+            color: white; 
+            font-family: sans-serif; 
+            text-align: center; 
+            margin-top: 20%; 
+        }
+        h1 { font-size: 3rem; color: #aaaaaa; }
+        #nilai-air { font-size: 7rem; color: #00ff00; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Jarak Permukaan Air:</h1>
+    <div id="nilai-air">Memuat...</div>
+
+    <script>
+        // alamat firebase
+        const urlFirebase = "https://rnest-flood-monitor-default-rtdb.asia-southeast1.firebasedatabase.app/sensor_jarak.json";
+
+        // 2. fungsi ambil data
+        async function ambilData() {
+            try {
+                // Kurir berangkat mengambil data
+                const respon = await fetch(urlFirebase);
+                const data = await respon.json();
+                
+                // Kurir menulis di papan tulis (jika datanya kosong, tulis 0)
+                const angka = data !== null ? data : 0;
+                document.getElementById("nilai-air").innerText = angka + " cm";
+                
+            } catch (error) {
+                // Jika kurir jatuh atau gagal
+                document.getElementById("nilai-air").innerText = "Gagal";
+            }
+        }
+
+        // loop
+        setInterval(ambilData, 5000);
+        
+        // deploy
+        ambilData();
+    </script>
+</body>
+</html>
