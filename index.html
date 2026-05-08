@@ -67,7 +67,7 @@
         // 2. Fungsi mengambil bekal dan membaginya ke laci
         async function ambilDataLengkap() {
             try {
-                const respon = await fetch(urlFirebase);
+                const respon = await fetch(urlFirebase, { cache: "no-store" });
                 const data = await respon.json();
                 
                 // Jika data tidak kosong (artinya ESP32 sudah mengirim)
