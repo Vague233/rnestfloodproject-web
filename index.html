@@ -3,43 +3,18 @@
 <head>
     <title>Dasbor Banjir RnEST</title>
     <style>
-        body { 
-            background-color: #0a0a0a; 
-            color: #ffffff; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            text-align: center; 
-            margin: 0;
-            padding: 50px 20px;
-        }
+        body { background-color: #0a0a0a; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin: 0; padding: 50px 20px;}
         h1 { color: #888888; font-size: 2.5rem; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 2px;}
-        
         .wadah-kartu { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
-        
-        .kartu { 
-            background-color: #1a1a1a; 
-            padding: 30px; 
-            border-radius: 15px; 
-            width: 250px; 
-            border: 1px solid #333;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
+        .kartu { background-color: #1a1a1a; padding: 30px; border-radius: 15px; width: 250px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: flex; flex-direction: column; justify-content: space-between;}
         .kartu h2 { font-size: 1.2rem; color: #aaaaaa; margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px;}
-        .nilai { font-size: 4.5rem; font-weight: bold; margin: 15px 0; color: #00ff00; }
+        .nilai { font-size: 4.5rem; font-weight: bold; margin: 15px 0; color: #00ff00; transition: color 0.3s;}
         .satuan { color: #777; font-size: 0.9rem; margin-bottom: 20px;}
-        
-        /* Kotak baru untuk kesimpulan status */
-        .status { 
-            font-size: 1.1rem; 
-            font-weight: bold; 
-            padding: 10px; 
-            border-radius: 8px; 
-            background-color: #222;
-            letter-spacing: 1px;
-        }
+        .status { font-size: 1.1rem; font-weight: bold; padding: 10px; border-radius: 8px; background-color: #222; letter-spacing: 1px;}
     </style>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
 
@@ -50,82 +25,79 @@
             <h2>Jarak Permukaan Air</h2>
             <div id="nilai-jarak" class="nilai">--</div>
             <div class="satuan">Centimeter (cm)</div>
-            <div id="status-jarak" class="status">Memuat...</div>
+            <div id="status-jarak" class="status">Menunggu...</div>
         </div>
-
         <div class="kartu">
             <h2>Intensitas Hujan</h2>
             <div id="nilai-hujan" class="nilai">--</div>
             <div class="satuan">Analog Value (0-1023)</div>
-            <div id="status-hujan" class="status">Memuat...</div>
+            <div id="status-hujan" class="status">Menunggu...</div>
         </div>
-
         <div class="kartu">
             <h2>Level Terendam</h2>
             <div id="nilai-air" class="nilai">--</div>
             <div class="satuan">Analog Value (0-1023)</div>
-            <div id="status-air" class="status">Memuat...</div>
+            <div id="status-air" class="status">Menunggu...</div>
         </div>
     </div>
 
     <script>
-        const urlFirebase = "https://rnest-flood-monitor-default-rtdb.asia-southeast1.firebasedatabase.app/data_sensor.json";
+        // 1. Memasukkan Koordinat Pipa (GANTI DENGAN URL-MU)
+        const firebaseConfig = {
+            databaseURL: "https://rnest-flood-monitor-default-rtdb.asia-southeast1.firebasedatabase.app/data_sensor.json" 
+        };
 
-        async function ambilDataLengkap() {
-            try {
-                // Memanggil data tanpa menggunakan memori singgahan (cache)
-                const respon = await fetch(urlFirebase, { cache: "no-store" });
-                const data = await respon.json();
-                
-                if (data !== null) {
-                    // 1. Tampilkan Angkanya
-                    let jarak = data.jarak !== undefined ? data.jarak : 0;
-                    let hujan = data.hujan !== undefined ? data.hujan : 0;
-                    let air = data.air !== undefined ? data.air : 0;
+        // 2. Merakit Pipa Air
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const laciSensor = database.ref('data_sensor');
 
-                    document.getElementById("nilai-jarak").innerText = jarak;
-                    document.getElementById("nilai-hujan").innerText = hujan;
-                    document.getElementById("nilai-air").innerText = air;
+        // 3. Keajaiban WebSocket: Menunggu air mengalir
+        // Fungsi 'on' ini ibarat alarm. Dia akan OTOMATIS berbunyi detik itu juga kalau ada data baru dari ESP32, tanpa perlu fungsi setInterval / polling lagi!
+        laciSensor.on('value', (snapshot) => {
+            const data = snapshot.val();
+            
+            if (data !== null) {
+                // Tampilkan Angka
+                document.getElementById("nilai-jarak").innerText = data.jarak;
+                document.getElementById("nilai-hujan").innerText = data.hujan;
+                document.getElementById("nilai-air").innerText = data.air;
 
-                    // 2. Terjemahkan Kesimpulannya (Logika sesuai Arduino-mu)
-                    
-                    // --- Logika Sensor Ultrasonik ---
-                    // Jarak di bawah 15 cm berarti air mendekati sensor (Debit Naik)
-                    if (jarak > 0 && jarak < 15) {
-                        document.getElementById("status-jarak").innerText = "DEBIT NAIK!";
-                        document.getElementById("status-jarak").style.color = "#ff4444"; // Warna Merah
-                    } else {
-                        document.getElementById("status-jarak").innerText = "NORMAL";
-                        document.getElementById("status-jarak").style.color = "#00ff00"; // Warna Hijau
-                    }
-
-                    // --- Logika Sensor Hujan ---
-                    // Nilai analog kurang dari 800 menandakan banyak rintik air
-                    if (hujan < 800) {
-                        document.getElementById("status-hujan").innerText = "HUJAN TURUN!";
-                        document.getElementById("status-hujan").style.color = "#ff4444";
-                    } else {
-                        document.getElementById("status-hujan").innerText = "TERANG / AMAN";
-                        document.getElementById("status-hujan").style.color = "#00ff00";
-                    }
-
-                    // --- Logika Sensor Level Air ---
-                    // Nilai analog lebih dari 300 berarti sensor terendam cukup dalam
-                    if (air > 300) {
-                        document.getElementById("status-air").innerText = "LEVEL BAHAYA!";
-                        document.getElementById("status-air").style.color = "#ff4444";
-                    } else {
-                        document.getElementById("status-air").innerText = "AMAN";
-                        document.getElementById("status-air").style.color = "#00ff00";
-                    }
+                // --- Logika Terjemahan ---
+                // Jarak Air
+                if (data.jarak > 0 && data.jarak < 15) {
+                    document.getElementById("status-jarak").innerText = "DEBIT NAIK!";
+                    document.getElementById("status-jarak").style.color = "#ff4444";
+                    document.getElementById("nilai-jarak").style.color = "#ff4444";
+                } else {
+                    document.getElementById("status-jarak").innerText = "NORMAL";
+                    document.getElementById("status-jarak").style.color = "#00ff00";
+                    document.getElementById("nilai-jarak").style.color = "#00ff00";
                 }
-            } catch (error) {
-                console.log("Menunggu koneksi data...");
-            }
-        }
 
-        setInterval(ambilDataLengkap, 1000);
-        ambilDataLengkap();
+                // Hujan
+                if (data.hujan < 800) {
+                    document.getElementById("status-hujan").innerText = "HUJAN TURUN!";
+                    document.getElementById("status-hujan").style.color = "#ff4444";
+                    document.getElementById("nilai-hujan").style.color = "#ff4444";
+                } else {
+                    document.getElementById("status-hujan").innerText = "TERANG / AMAN";
+                    document.getElementById("status-hujan").style.color = "#00ff00";
+                    document.getElementById("nilai-hujan").style.color = "#00ff00";
+                }
+
+                // Level Air
+                if (data.air > 300) {
+                    document.getElementById("status-air").innerText = "LEVEL BAHAYA!";
+                    document.getElementById("status-air").style.color = "#ff4444";
+                    document.getElementById("nilai-air").style.color = "#ff4444";
+                } else {
+                    document.getElementById("status-air").innerText = "AMAN";
+                    document.getElementById("status-air").style.color = "#00ff00";
+                    document.getElementById("nilai-air").style.color = "#00ff00";
+                }
+            }
+        });
     </script>
 </body>
 </html>
