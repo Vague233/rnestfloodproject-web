@@ -119,7 +119,7 @@
             document.getElementById(`${idKodeSungai}-nilai-air`).innerText = data.air;
 
             // Logika Jarak Air
-            if (data.jarak > 0 && data.jarak < 15) {
+            if (data.jarak > 0 && data.jarak < 10) {
                 document.getElementById(`${idKodeSungai}-status-jarak`).innerText = "DEBIT NAIK!";
                 document.getElementById(`${idKodeSungai}-status-jarak`).style.color = "#ff4444";
                 document.getElementById(`${idKodeSungai}-nilai-jarak`).style.color = "#ff4444";
