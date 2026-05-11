@@ -6,7 +6,6 @@
         body { background-color: #0a0a0a; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin: 0; padding: 30px 20px;}
         h1 { color: #888888; font-size: 2rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px;}
         
-        /* Gaya untuk memisahkan setiap lokasi sungai */
         .blok-sungai { background-color: #111; border: 1px solid #333; border-radius: 15px; padding: 20px; margin-bottom: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);}
         .judul-sungai { color: #ffffff; font-size: 1.5rem; text-align: left; border-bottom: 2px solid #222; padding-bottom: 10px; margin-top: 0; margin-bottom: 20px;}
 
@@ -25,7 +24,7 @@
 
     <h1>Pemantauan Sungai Terpusat</h1>
     
-    <!-- LOKASI SUNGAI A -->
+    <!-- SUNGAI A -->
     <div class="blok-sungai">
         <h2 class="judul-sungai">SUNGAI A</h2>
         <div class="wadah-kartu">
@@ -47,7 +46,7 @@
         </div>
     </div>
 
-    <!-- LOKASI SUNGAI B -->
+    <!-- SUNGAI B -->
     <div class="blok-sungai">
         <h2 class="judul-sungai">SUNGAI B</h2>
         <div class="wadah-kartu">
@@ -92,8 +91,6 @@
     </div>
 
     <script>
-        // 1. Koordinat Pipa (GANTI DENGAN URL-MU)
-        // 1. Koordinat Pipa Resmi (Kredensial Firebase Lengkap)
         const firebaseConfig = {
             apiKey: "AIzaSyAiBPKW-LcVVt9H4p4xX0OZ5zsBj_BN_Ho",
             authDomain: "rnest-flood-monitor.firebaseapp.com",
@@ -107,18 +104,13 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         
-        // Kita sekarang memantau pintu masuk utama "lokasi_sungai"
         const laciPusat = database.ref('lokasi_sungai');
 
-        // 2. Fungsi Mesin Penerjemah Universal
-        // Fungsi ini bisa dipakai berulang kali untuk sungai manapun yang mengirim data
         function perbaruiLayarSungai(idKodeSungai, data) {
-            // Tampilkan Angka
             document.getElementById(`${idKodeSungai}-nilai-jarak`).innerText = data.jarak;
             document.getElementById(`${idKodeSungai}-nilai-hujan`).innerText = data.hujan;
             document.getElementById(`${idKodeSungai}-nilai-air`).innerText = data.air;
 
-            // Logika Jarak Air
             if (data.jarak > 0 && data.jarak < 10) {
                 document.getElementById(`${idKodeSungai}-status-jarak`).innerText = "DEBIT NAIK!";
                 document.getElementById(`${idKodeSungai}-status-jarak`).style.color = "#ff4444";
@@ -129,7 +121,6 @@
                 document.getElementById(`${idKodeSungai}-nilai-jarak`).style.color = "#00ff00";
             }
 
-            // Logika Hujan
             if (data.hujan < 800) {
                 document.getElementById(`${idKodeSungai}-status-hujan`).innerText = "HUJAN TURUN!";
                 document.getElementById(`${idKodeSungai}-status-hujan`).style.color = "#ff4444";
@@ -140,7 +131,6 @@
                 document.getElementById(`${idKodeSungai}-nilai-hujan`).style.color = "#00ff00";
             }
 
-            // Logika Level Air
             if (data.air > 300) {
                 document.getElementById(`${idKodeSungai}-status-air`).innerText = "LEVEL BAHAYA!";
                 document.getElementById(`${idKodeSungai}-status-air`).style.color = "#ff4444";
@@ -152,12 +142,10 @@
             }
         }
 
-        // 3. Menunggu Aliran Air dari Pusat
         laciPusat.on('value', (snapshot) => {
             const semuaData = snapshot.val();
             
             if (semuaData !== null) {
-                // Memeriksa apakah Sungai A mengirim data, jika iya, masukkan ke Mesin Penerjemah
                 if (semuaData.sungai_a) perbaruiLayarSungai("sungai_a", semuaData.sungai_a);
                 if (semuaData.sungai_b) perbaruiLayarSungai("sungai_b", semuaData.sungai_b);
                 if (semuaData.sungai_c) perbaruiLayarSungai("sungai_c", semuaData.sungai_c);
